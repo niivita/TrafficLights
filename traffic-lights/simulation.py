@@ -18,9 +18,9 @@ class Main:
     white = (255, 255, 255)
 
     # Screensize TODO: other size?
-    screenSize = (1400, 800)
+    screenSize = (700, 700)
 
-    background = pygame.image.load('background.png')
+    background = pygame.image.load('bg_intersection.png')
 
     screen = pygame.display.set_mode(screenSize)
     pygame.display.set_caption("OUR SIMULATION YAY")
