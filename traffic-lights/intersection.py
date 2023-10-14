@@ -6,7 +6,7 @@ import tkinter as tk
 class TrafficLight:
 
     def __init__(self, color, offset):
-        self.offset = offset  # position left to right for this instance to draw its ligh
+        self.offset = offset  # position left to right for this instance to draw its light
         self.canvas = canvas
         canvas.create_rectangle(offset + 0, 30, offset + 100, 370, fill="black")
         canvas.create_oval(offset + 3, 40, offset + 100, 140, fill="grey")
@@ -55,7 +55,7 @@ def update_traffic_lights():
 t = 0
 while t <= 24:
     t = round(t, 1)
-    print(t)
+
     # @ 9s, change E/W light to Yellow {9s Green}
     if t == 9:
         trafficLights[1].setColor("YELLOW")
