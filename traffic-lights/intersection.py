@@ -1,5 +1,6 @@
 import time
 import tkinter as tk
+import pygame
 
 
 # Single light
@@ -35,10 +36,13 @@ class TrafficLight:
 
 
 # create GUI
-root = tk.Tk()
-root.title("Traffic Light Simulation")
-canvas = tk.Canvas(root, width=450, height=400, bg="white")
-canvas.pack()
+# root = tk.Tk()
+# root.title("Traffic Light Simulation")
+# canvas = tk.Canvas(root, width=450, height=400, bg="white")
+# canvas.pack()
+
+pygame.init()
+simulation = pygame.sprite.Group()
 
 # lights within logic
 trafficLights = [TrafficLight("RED", 0), TrafficLight("GREEN", 110), TrafficLight("RED", 220),
