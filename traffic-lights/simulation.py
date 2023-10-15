@@ -1,7 +1,19 @@
+import random
 import sys
+import threading
+
 import pygame
 import time
 
+# possible directions TODO: extra directions
+# directions = {"north": ["northwest", "north"],
+#               "south": ["southeast", "south"],
+#               "west": ["southwest", "west"],
+#               "east": ["northeast", "east"]}
+directions = {"north": ["north", "north"],
+              "south": ["south", "south"],
+              "west": ["west", "west"],
+              "east": ["east", "east"]}
 
 # the four lights
 trafficLights = {}
@@ -78,7 +90,7 @@ class Vehicle(pygame.sprite.Sprite):
         # speed for this car (TODO: may be a list of multiple types)
         self.speed = 5 # TODO: Speed Struct
         # the coordinates for this car based on its direction
-        self.location = vehicleCoordinates[direction]
+        self.location = vehicleCoordinates[direction].copy()
         # image for this vehicle TODO: will need to be dynamic and have rotated vehicles for each orientation
         path = orientation+"Bus.png"
         self.image = pygame.image.load(path)
@@ -95,13 +107,13 @@ class Vehicle(pygame.sprite.Sprite):
             # TODO: all cars same length? (if so can simplify)
             match orientation:
                 case "north":
-                    self.stop_dist = vehicles[direction]["lane"][self.index - 1].stop_dist - vehicles[direction]["lane"][self.index - 1].image.get_rect().height - vehicularGap
+                    self.stop_dist = vehicles[direction]["lane"][self.index - 1].stop_dist - vehicles[direction]["lane"][self.index - 1].image.get_rect().height + vehicularGap
                 case "south":
                     self.stop_dist = vehicles[direction]["lane"][self.index - 1].stop_dist - vehicles[direction]["lane"][self.index - 1].image.get_rect().height - vehicularGap
                 case "east":
                     self.stop_dist = vehicles[direction]["lane"][self.index - 1].stop_dist - vehicles[direction]["lane"][self.index - 1].image.get_rect().width - vehicularGap
                 case "west":
-                    self.stop_dist = vehicles[direction]["lane"][self.index - 1].stop_dist - vehicles[direction]["lane"][self.index - 1].image.get_rect().width - vehicularGap
+                    self.stop_dist = vehicles[direction]["lane"][self.index - 1].stop_dist - vehicles[direction]["lane"][self.index - 1].image.get_rect().width + vehicularGap
         # no cars in lane, just stop at given
         else:
             self.stop_dist = defaultStopLine[orientation]
@@ -136,14 +148,61 @@ class Vehicle(pygame.sprite.Sprite):
                     self.location["y"] += self.speed
             case "north":
                 # if it hasn't already crossed, and has now crossed the stop line boundary
-                if self.crossed == 0 and self.location["y"] + self.image.get_rect().height <= stopLines[self.orientation]:
+                if self.crossed == 0 and self.location["y"] <= stopLines[self.orientation]:
                     self.crossed = 1
+                    # vehicles[self.direction]["lane"].pop(0)
+                    # for vehicle in vehicles[self.direction]["lane"]:
+                    #     vehicle.index -= 1
+                    if self.index + 1 < len(vehicles[self.direction]["lane"]):
+                        vehicles[self.direction]["lane"][self.index + 1].stop_dist = stopLines[self.orientation]
+
+                # # if already crossed, keep moving no matter what
+                # if self.crossed == 1:
+                #     self.location["y"] -= self.speed
+                #
+                # # if the light is green (keep going)
+                # elif trafficLights[self.orientation].color == "GREEN":
+                #     self.location["y"] -= self.speed
+                #
+                # # if the light is yellow (check how far from the line
+                # elif trafficLights[self.orientation].color == "YELLOW":
+                #     # if there's enough space before crossing line, keep going
+                #     if self.location["y"] - self.image.get_rect().height >= stopLines[self.orientation]:
+                #         self.location["y"] -= self.speed
+                #
+                # # if the light is red, move if there's space to move
+                # elif trafficLights[self.orientation].color == "RED":
+                #     # if there is space before the stop distance
+                #     if self.location["y"] >= self.stop_dist:
+                #         # if it's the first car, or there's space behind the previous car
+                #         if self.index == 0 or self.location["y"] - self.image.get_rect().height > (vehicles[self.direction]["lane"][self.index - 1].location["y"] + vehicularGap):
+                #             self.location["y"] -= self.speed
+
+                # if the light is red, only move if there is space behind the car in front OR before the stop line
+                if trafficLights[self.orientation].color == "RED" or trafficLights[self.orientation].color == "TURN":
+                    # if has already crossed, can keep moving
+                    if self.crossed == 1:
+                        self.location["y"] -= self.speed
+                    # if first car and hasn't reached stop line
+                    if self.location["y"] >= self.stop_dist and self.index == 0:
+                        self.location["y"] -= self.speed
+                    # otherwise, not first car and distance behind vehicle is large enough
+                    elif self.index != 0 and (self.location["y"] > (vehicles[self.direction]["lane"][self.index - 1].location["y"] + vehicles[self.direction]["lane"][self.index-1].image.get_rect().height + vehicularGap) and self.location["y"] - self.image.get_rect().height >= self.stop_dist):
+                        self.location["y"] -= self.speed
+                    #
+                    # # print(self.index)
+                    # # print("location" + self.location["y"])
+                    # if self.index == 0 or (self.location["y"] > (vehicles[self.direction]["lane"][self.index - 1].location["y"] + vehicles[self.direction]["lane"][self.index-1].image.get_rect().height + vehicularGap) and self.location["y"] - self.image.get_rect().height >= self.stop_dist):
+                    #     self.location["y"] -= self.speed
+
 
                 # if the car hasn't reached the stop yet, has already crossed, or the light is green/yellow
                 # AND it's the first car, or there is enough space behind the next vehicle => Move Car
-                if (self.location["y"] >= self.stop_dist or self.crossed == 1 or (trafficLights[self.orientation].color == "GREEN" or trafficLights[self.orientation].color == "YELLOW")) \
-                    and (self.index == 0 or self.location["y"] + self.image.get_rect().height < (vehicles[self.direction]["lane"][self.index - 1].location["y"] - vehicularGap)):
-                    self.location["y"] -= self.speed
+                # IF the car is before its stopping distance, has crossed, OR the light is Green / Yellow
+                elif self.location["y"] >= self.stop_dist or self.crossed == 1 or (trafficLights[self.orientation].color == "GREEN" or trafficLights[self.orientation].color == "YELLOW"):
+                    # if its the first car in its lane, OR has enough space behind the car infront of fit
+                    if (self.index == 0 or self.location["y"] > (vehicles[self.direction]["lane"][self.index - 1].location["y"] + vehicles[self.direction]["lane"][self.index-1].image.get_rect().height +vehicularGap)):
+                        self.location["y"] -= self.speed
 
             case "west":
                 # if it hasn't already crossed, and has now crossed the stop line boundary
@@ -173,6 +232,19 @@ def create_traffic_lights():
     trafficLights["west"] = TrafficLight("GREEN", "west")
     # update display after setting
     pygame.display.update()
+
+
+# instantiate cars
+def create_vehicles():
+    keys = list(directions.keys())
+    for i in range(0, 10):
+        Vehicle("north", "north")
+        # o_num = random.randint(0, 3)
+        # d_num = random.randint(0, 1)
+        #
+        # print("CREATING: " +keys[o_num])
+        # Vehicle(keys[o_num], directions[keys[o_num]][d_num])
+        time.sleep(3)
 
 
 # TODO: possibly involve car-movement methods in here? (a thread workaround)
@@ -241,11 +313,9 @@ class Main:
     # create lights
     create_traffic_lights()
 
-    # create vehicle (TODO: one for now .. future a method)
-    Vehicle("north", "north")
-    Vehicle("south", "south")
-    Vehicle("east", "east")
-    Vehicle("west", "west")
+    thread = threading.Thread(name="generateVehicles", target=create_vehicles, args=())  # Generating vehicles
+    thread.daemon = True
+    thread.start()
 
     # track light timing
     t = 0
@@ -320,7 +390,7 @@ class Main:
 
         # increment timer for lights
         t += .1
-        time.sleep(.1)  # stops script for .1 seconds (for animation)
+        time.sleep(.05)  # stops script for .1 seconds (for animation)
 
 
 Main()
