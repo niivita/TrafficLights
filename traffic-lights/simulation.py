@@ -232,11 +232,38 @@ def traffic_timer():
         t += .1
         time.sleep(.1)  # stops script for .1 seconds (for animation)
 
+class Pedestrian:
+    def __init__(self, position):
+        self.active = False
+        self.position = 0
+
+# When the north and south lights are green/yellow, pedestrians move north to south (and v.v)
+    def activateNW(self):
+        self.active = True
+        print(f"Pedestrians are crossing the street between N and W")
+
+    def activateES(self):
+        self.active = True
+        print(f"Pedestrians are crossing the street between E and S")
+ 
+ # When the east and west lights are green/yellow, pedestrians move east to west (and v.v)
+    def activateNE(self):
+        self.active = True
+        print(f"Pedestrians are crossing the street between N and E")
+
+    def activateWS(self):
+        self.active = True
+        print(f"Pedestrians are crossing the street between W and S")
 
 class Main:
     # set background first (bottom - most layer)
     background = pygame.image.load('bg_intersection.png')
     screen.blit(background, (0, 0))
+
+    pedestrian_north = Pedestrian("north")
+    pedestrian_south = Pedestrian("south")
+    pedestrian_east = Pedestrian("east")
+    pedestrian_west = Pedestrian("west")
 
     # create lights
     create_traffic_lights()
@@ -267,26 +294,41 @@ class Main:
         if t == 9:
             trafficLights["east"].set_color("YELLOW")
             trafficLights["west"].set_color("YELLOW")
-
+            pedestrian_north.activateNE()
+            pedestrian_east.activateNE()
+            pedestrian_west.activateWS()
+            pedestrian_south.activateWS()
+        
         # @ 12s, change E/W light to Turn {3s Yellow}
         if t == 12:
             trafficLights["east"].set_color("TURN")
             trafficLights["west"].set_color("TURN")
+    
 
         # @ 16s, change E/W light to Red {4s Turn}
         if t == 16:
             trafficLights["east"].set_color("RED")
             trafficLights["west"].set_color("RED")
 
+
         # delay & @ 17s, change N/S light to Green {17s red}
         if t == 17:
             trafficLights["north"].set_color("GREEN")
             trafficLights["south"].set_color("GREEN")
+            pedestrian_north.activateNW()
+            pedestrian_west.activateNW()
+            pedestrian_east.activateES()
+            pedestrian_south.activateES()
+     
 
         # @ 21s, change N/S light to Yellow {9s Green}
         if t == 26:
             trafficLights["north"].set_color("YELLOW")
             trafficLights["south"].set_color("YELLOW")
+            pedestrian_north.activateNW()
+            pedestrian_west.activateNW()
+            pedestrian_east.activateES()
+            pedestrian_south.activateES()
 
         # @ 29s, change N/S light to Turn {3s Yellow}
         if t == 29:
@@ -302,6 +344,10 @@ class Main:
         if t == 37:
             trafficLights["east"].set_color("GREEN")
             trafficLights["west"].set_color("GREEN")
+            pedestrian_north.activateNE()
+            pedestrian_east.activateNE()
+            pedestrian_west.activateWS()
+            pedestrian_south.activateWS()
             t = -0.1
 
         # re-render lights (over new bg)
