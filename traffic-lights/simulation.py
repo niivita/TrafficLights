@@ -15,10 +15,10 @@ greenSignal = pygame.image.load("signals/green.png")
 turnSignal = pygame.image.load("signals/turn.png")
 
 # Coordinates of vehicles' start driving __ bound in a given lane
-vehicleCoordinates = {"north": {"x": 385, "y": 700}, "northwest": {"x": 365, "y": 700},
-                      "east": {"x": 0, "y": 300}, "northeast": {"x": 0, "y": 365},
-                      "south": {"x": 308, "y": 0}, "southeast": {"x": 334, "y": 0},
-                      "west": {"x": 700, "y": 309}, "southwest": {"x": 700, "y": 344}}
+vehicleCoordinates = {"north": {"x": 383, "y": 700}, "northwest": {"x": 365, "y": 700},
+                      "east": {"x": 0, "y": 282}, "northeast": {"x": 0, "y": 365},
+                      "south": {"x": 295, "y": 0}, "southeast": {"x": 334, "y": 0},
+                      "west": {"x": 700, "y": 389}, "southwest": {"x": 700, "y": 344}}
 
 # Coordinates of stop lines for cars driving in _ direction
 stopLines = {"north": 460, "east": 240, "south": 240, "west": 460}
@@ -76,11 +76,12 @@ class Vehicle(pygame.sprite.Sprite):
         # car direction [is it turning?]
         self.direction = direction
         # speed for this car (TODO: may be a list of multiple types)
-        self.speed = 2.25 # TODO: Speed Struct
+        self.speed = 5 # TODO: Speed Struct
         # the coordinates for this car based on its direction
         self.location = vehicleCoordinates[direction]
         # image for this vehicle TODO: will need to be dynamic and have rotated vehicles for each orientation
-        self.image = pygame.image.load("bus.png")
+        path = orientation+"Bus.png"
+        self.image = pygame.image.load(path)
         # ( path = "images/" + direction + "/" + vehicleClass + ".png)
         vehicles[direction]["lane"].append(self)
         # car number in the list
@@ -123,42 +124,45 @@ class Vehicle(pygame.sprite.Sprite):
 
     def move(self):
         match self.direction:
-            case "north":
-                # if it hasn't already crossed, and has now crossed the stop line boundary
-                if self.crossed == 0 and self.location["x"] + self.image.get_rect().height <= stopLines[self.orientation]:
-                    self.crossed = 1
-                # if the car hasn't reached the stop yet, has already crossed, or the light is green/yellow
-                # AND it's the first car, or there is enough space behind the next vehicle => Move Car
-                if (self.image.get_rect().height <= self.stop_dist or self.crossed == 1 or (trafficLights[self.orientation].color == "GREEN" or trafficLights[self.orientation].color == "YELLOW")) \
-                    and (self.index == 0 or self.location["y"] + self.image.get_rect().height > (vehicles[self.direction]["lane"][self.index-1].location["y"] - vehicularGap)):
-                    self.location["y"] -= self.speed
             case "south":
                 # if it hasn't already crossed, and has now crossed the stop line boundary
-                if self.crossed == 0 and self.location["x"] + self.image.get_rect().height >= stopLines[self.orientation]:
+                if self.crossed == 0 and self.location["y"] + self.image.get_rect().height >= stopLines[self.orientation]:
                     self.crossed = 1
+
                 # if the car hasn't reached the stop yet, has already crossed, or the light is green/yellow
                 # AND it's the first car, or there is enough space behind the next vehicle => Move Car
-                if (self.image.get_rect().height <= self.stop_dist or self.crossed == 1 or (trafficLights[self.orientation].color == "GREEN" or trafficLights[self.orientation].color == "YELLOW")) \
-                    and (self.index == 0 or self.location["y"] + self.image.get_rect().height < (vehicles[self.direction]["lane"][self.index - 1].location["y"] - vehicularGap)):
+                if (self.location["y"]+self.image.get_rect().height <= self.stop_dist or self.crossed == 1 or (trafficLights[self.orientation].color == "GREEN" or trafficLights[self.orientation].color == "YELLOW")) \
+                    and (self.index == 0 or self.location["y"] + self.image.get_rect().height > (vehicles[self.direction]["lane"][self.index-1].location["y"] - vehicularGap)):
                     self.location["y"] += self.speed
-            case "east":
+            case "north":
                 # if it hasn't already crossed, and has now crossed the stop line boundary
-                if self.crossed == 0 and self.location["x"] + self.image.get_rect().width >= stopLines[self.orientation]:
+                if self.crossed == 0 and self.location["y"] + self.image.get_rect().height <= stopLines[self.orientation]:
                     self.crossed = 1
+
                 # if the car hasn't reached the stop yet, has already crossed, or the light is green/yellow
                 # AND it's the first car, or there is enough space behind the next vehicle => Move Car
-                if (self.image.get_rect().height <= self.stop_dist or self.crossed == 1 or (trafficLights[self.orientation].color == "GREEN" or trafficLights[self.orientation].color == "YELLOW")) \
-                    and (self.index == 0 or self.location["x"] + self.image.get_rect().width < (vehicles[self.direction]["lane"][self.index - 1].location["x"] - vehicularGap)):
-                    self.location["x"] += self.speed
+                if (self.location["y"] >= self.stop_dist or self.crossed == 1 or (trafficLights[self.orientation].color == "GREEN" or trafficLights[self.orientation].color == "YELLOW")) \
+                    and (self.index == 0 or self.location["y"] + self.image.get_rect().height < (vehicles[self.direction]["lane"][self.index - 1].location["y"] - vehicularGap)):
+                    self.location["y"] -= self.speed
+
             case "west":
                 # if it hasn't already crossed, and has now crossed the stop line boundary
                 if self.crossed == 0 and self.location["x"] + self.image.get_rect().width <= stopLines[self.orientation]:
                     self.crossed = 1
                 # if the car hasn't reached the stop yet, has already crossed, or the light is green/yellow
                 # AND it's the first car, or there is enough space behind the next vehicle => Move Car
-                if (self.image.get_rect().height <= self.stop_dist or self.crossed == 1 or (trafficLights[self.orientation].color == "GREEN" or trafficLights[self.orientation].color == "YELLOW")) \
-                    and (self.index == 0 or self.location["x"] + self.image.get_rect().width > (vehicles[self.direction]["lane"][self.index - 1].location["x"] - vehicularGap)):
+                if (self.location["x"] >= self.stop_dist or self.crossed == 1 or (trafficLights[self.orientation].color == "GREEN" or trafficLights[self.orientation].color == "YELLOW")) \
+                    and (self.index == 0 or self.location["x"] + self.image.get_rect().width < (vehicles[self.direction]["lane"][self.index - 1].location["x"] - vehicularGap)):
                     self.location["x"] -= self.speed
+            case "east":
+                # if it hasn't already crossed, and has now crossed the stop line boundary
+                if self.crossed == 0 and self.location["x"] + self.image.get_rect().width >= stopLines[self.orientation]:
+                    self.crossed = 1
+                # if the car hasn't reached the stop yet, has already crossed, or the light is green/yellow
+                # AND it's the first car, or there is enough space behind the next vehicle => Move Car
+                if (self.location["x"]+self.image.get_rect().height <= self.stop_dist or self.crossed == 1 or (trafficLights[self.orientation].color == "GREEN" or trafficLights[self.orientation].color == "YELLOW")) \
+                    and (self.index == 0 or self.location["x"] + self.image.get_rect().width > (vehicles[self.direction]["lane"][self.index - 1].location["x"] - vehicularGap)):
+                    self.location["x"] += self.speed
 
 
 # instantiates traffic lights
@@ -239,6 +243,9 @@ class Main:
 
     # create vehicle (TODO: one for now .. future a method)
     Vehicle("north", "north")
+    Vehicle("south", "south")
+    Vehicle("east", "east")
+    Vehicle("west", "west")
 
     # track light timing
     t = 0
