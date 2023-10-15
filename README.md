@@ -2,7 +2,36 @@
 Regulating Traffic Lights at 4-Way Stop 
 
 
-Requires Python 3.11 and brew install python-tk@3.11
+Requires Python 3.11 and pygame
+
+## Build instructions
+* Make sure you have installed the pygame library
+* Run simulation.py by navigating to the library where the ga
+
+## Design Details
+* The intersection is designed to have two lanes per direction, where the left lane is a left only turn at the intersection and the right lane is a straight or right turn only lane.
+
+* Picture shown for the intersection:
+![bg_intersection](https://github.com/niivita/TrafficLights/assets/102556053/0b835bf4-4505-4b27-a755-318d1d228b3c)
+
+* The light to the right of the lane corresponds to that lane (shown below with numbers pairing lane and light):
+  ![intersection_diagram](https://github.com/niivita/TrafficLights/assets/102556053/57d01601-0d75-4b1a-9f63-2f3cc4ed4392)
+
+
+## Secure and Unsecure States
+### Secure states
+* All traffic lights red- secure when the intersection is empty.
+* Only one direction green- secure when no vehicles are crossing paths.
+* Yellow with enough time for cars at the intersection to exit the intersection before red comes up.
+  * To ensure that no cars will be in the intersection when the red light happens, we ensured that (Speed of the car) * (time of yellow light) > (length of intersection)
+* Pedestrian crossing light on when red light is on for the parallel direction.
+ 
+## Unsecure states
+* Light change from red to green in one direction when another direction is still yellow.
+* When vehicle is turning left, ensure that it does not run into a crossroads with the car that's coming in the opposite direction.
+* Pedestrian light is on to cross when the green/yellow light is on for the direction perpendicular to the pedestrian crossing.
+
+# Assignment Instructions:
 
 ## Specifications:
 * Using Traffic and Pedestrian Lights at the 4-way crossing, actively manage both vehicle and pedestrian traffic.
