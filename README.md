@@ -6,7 +6,7 @@ Requires Python 3.11 and pygame
 
 ## Build instructions
 * Make sure you have installed the pygame library
-* Run simulation.py by navigating to the library where the ga
+* Run simulation.py by navigating to the library where the file is located and running `python3 simulation.py`
 
 ## Design Details
 * The intersection is designed to have two lanes per direction, where the left lane is a left only turn at the intersection and the right lane is a straight or right turn only lane.
