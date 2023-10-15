@@ -91,19 +91,19 @@ class Vehicle(pygame.sprite.Sprite):
         self.speed = 5 # TODO: Speed Struct
         # the coordinates for this car based on its direction
         self.location = vehicleCoordinates[direction].copy()
-        # image for this vehicle TODO: will need to be dynamic and have rotated vehicles for each orientation
+        # image for this vehicle
         path = orientation+"Bus.png"
         self.image = pygame.image.load(path)
         # ( path = "images/" + direction + "/" + vehicleClass + ".png)
-        vehicles[direction]["lane"].append(self)
         # car number in the list
-        self.index = len(vehicles[direction]["lane"]) - 1
+        self.index = len(vehicles[direction]["lane"])
+        vehicles[direction]["lane"].append(self)
         # indicate if it has crossed the stop line TODO: maybe a boolean? (taken from other)
         self.crossed = 0
 
         # determine its stopping distance
         # if there are more vehicles in the lane, and has not passed the stop line
-        if len(vehicles[direction]["lane"]) > 1 and vehicles[direction]["numCrossed"] == 0:
+        if len(vehicles[direction]["lane"]) > 1 and self.index > vehicles[direction]["numCrossed"]:
             # TODO: all cars same length? (if so can simplify)
             match orientation:
                 case "north":
@@ -147,63 +147,29 @@ class Vehicle(pygame.sprite.Sprite):
                     and (self.index == 0 or self.location["y"] + self.image.get_rect().height > (vehicles[self.direction]["lane"][self.index-1].location["y"] - vehicularGap)):
                     self.location["y"] += self.speed
             case "north":
-                # if it hasn't already crossed, and has now crossed the stop line boundary
-                if self.crossed == 0 and self.location["y"] <= stopLines[self.orientation]:
-                    self.crossed = 1
-                    # vehicles[self.direction]["lane"].pop(0)
-                    # for vehicle in vehicles[self.direction]["lane"]:
-                    #     vehicle.index -= 1
-                    if self.index + 1 < len(vehicles[self.direction]["lane"]):
-                        vehicles[self.direction]["lane"][self.index + 1].stop_dist = stopLines[self.orientation]
-
-                # # if already crossed, keep moving no matter what
-                # if self.crossed == 1:
-                #     self.location["y"] -= self.speed
-                #
-                # # if the light is green (keep going)
-                # elif trafficLights[self.orientation].color == "GREEN":
-                #     self.location["y"] -= self.speed
-                #
-                # # if the light is yellow (check how far from the line
-                # elif trafficLights[self.orientation].color == "YELLOW":
-                #     # if there's enough space before crossing line, keep going
-                #     if self.location["y"] - self.image.get_rect().height >= stopLines[self.orientation]:
-                #         self.location["y"] -= self.speed
-                #
-                # # if the light is red, move if there's space to move
-                # elif trafficLights[self.orientation].color == "RED":
-                #     # if there is space before the stop distance
-                #     if self.location["y"] >= self.stop_dist:
-                #         # if it's the first car, or there's space behind the previous car
-                #         if self.index == 0 or self.location["y"] - self.image.get_rect().height > (vehicles[self.direction]["lane"][self.index - 1].location["y"] + vehicularGap):
-                #             self.location["y"] -= self.speed
-
                 # if the light is red, only move if there is space behind the car in front OR before the stop line
                 if trafficLights[self.orientation].color == "RED" or trafficLights[self.orientation].color == "TURN":
-                    # if has already crossed, can keep moving
+                    # if car has already crossed, can keep moving
                     if self.crossed == 1:
                         self.location["y"] -= self.speed
                     # if first car and hasn't reached stop line
-                    if self.location["y"] >= self.stop_dist and self.index == 0:
-                        self.location["y"] -= self.speed
+                    elif self.location["y"] > self.stop_dist and self.index == vehicles[self.direction]["numCrossed"]:
+                        self.location["y"] = max(self.location["y"] - self.speed, self.stop_dist + 3)
                     # otherwise, not first car and distance behind vehicle is large enough
-                    elif self.index != 0 and (self.location["y"] > (vehicles[self.direction]["lane"][self.index - 1].location["y"] + vehicles[self.direction]["lane"][self.index-1].image.get_rect().height + vehicularGap) and self.location["y"] - self.image.get_rect().height >= self.stop_dist):
+                    elif self.location["y"] > (vehicles[self.direction]["lane"][self.index - 1].location["y"] + vehicles[self.direction]["lane"][self.index-1].image.get_rect().height + vehicularGap) and self.location["y"]  >= self.stop_dist:
                         self.location["y"] -= self.speed
-                    #
-                    # # print(self.index)
-                    # # print("location" + self.location["y"])
-                    # if self.index == 0 or (self.location["y"] > (vehicles[self.direction]["lane"][self.index - 1].location["y"] + vehicles[self.direction]["lane"][self.index-1].image.get_rect().height + vehicularGap) and self.location["y"] - self.image.get_rect().height >= self.stop_dist):
-                    #     self.location["y"] -= self.speed
+                # otherwise if green / yellow
+                else:
+                    self.location["y"] -= self.speed
 
-
-                # if the car hasn't reached the stop yet, has already crossed, or the light is green/yellow
-                # AND it's the first car, or there is enough space behind the next vehicle => Move Car
-                # IF the car is before its stopping distance, has crossed, OR the light is Green / Yellow
-                elif self.location["y"] >= self.stop_dist or self.crossed == 1 or (trafficLights[self.orientation].color == "GREEN" or trafficLights[self.orientation].color == "YELLOW"):
-                    # if its the first car in its lane, OR has enough space behind the car infront of fit
-                    if (self.index == 0 or self.location["y"] > (vehicles[self.direction]["lane"][self.index - 1].location["y"] + vehicles[self.direction]["lane"][self.index-1].image.get_rect().height +vehicularGap)):
-                        self.location["y"] -= self.speed
-
+                # if it hasn't already crossed, and has now crossed the stop line boundary
+                if self.crossed == 0 and self.location["y"] <= stopLines[self.orientation]:
+                    self.crossed = 1
+                    vehicles[self.direction]["numCrossed"] += 1
+                    # reset the next car's stop ;
+                    if self.index + 1 < len(vehicles[self.direction]["lane"]):
+                        vehicles[self.direction]["lane"][self.index + 1].stop_dist = stopLines[self.orientation]
+                        
             case "west":
                 # if it hasn't already crossed, and has now crossed the stop line boundary
                 if self.crossed == 0 and self.location["x"] + self.image.get_rect().width <= stopLines[self.orientation]:
