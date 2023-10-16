@@ -118,6 +118,8 @@ class Vehicle(pygame.sprite.Sprite):
         vehicles[direction]["lane"].append(self)
         # indicate if it has crossed the stop line (0 or 1)
         self.crossed = 0
+        # indicate if the car has turned
+        self.hasTurned = False
 
         # determine its stopping distance
         # if there are more vehicles in the lane, and has not passed the stop line
@@ -306,7 +308,6 @@ class Vehicle(pygame.sprite.Sprite):
                     else:
                         self.location["y"] -= (self.speed)
                         
-
                 # if it hasn't already crossed, and has now crossed the stop line boundary
                 if self.crossed == 0 and self.location["y"]<= stopLines[self.orientation]:
                     self.crossed = 1
@@ -316,42 +317,44 @@ class Vehicle(pygame.sprite.Sprite):
                         vehicles[self.direction]["lane"][self.index + 1].stop_dist = stopLines[self.orientation]
 
             case "southeast":
-                # if the light is essentially red for this lane
-                if trafficLights[self.orientation].color != "TURN":
-                    # if car has already crossed, can keep moving
-                    if self.crossed == 1:
-                        self.location["x"] += self.speed + 10
+                # regardless of light, if car is in intersection, turn
+                if self.crossed == 1:
+                    # move until it reaches the second boundary
+                    if self.location["y"] + self.image.get_rect().height < stopLines[self.orientation] + 115:
+                        self.location["y"] += self.speed
+                    # when boundary is reached, load new car (prevent overlap of new cars
+                    elif self.index == 0 or self.location["x"] + self.image.get_rect().height < \
+                            vehicles[self.direction]["lane"][self.index - 1].location["x"] - 4 - vehicularGap:
+                        self.location["y"] += self.image.get_rect().height
+                        path = "visuals/vehicles/eastCar.png"
+                        self.image = pygame.image.load(path)
+                        self.hasTurned = True
+                        self.location["x"] = min(self.location["x"],
+                                                 vehicles[self.direction]["lane"][self.index - 1].location[
+                                                     "x"] - 4 - vehicularGap)
+                        self.direction = "east"
+                        self.orientation = "east"
+                        self.location["x"] += self.speed
+
+                # otherwise, check lights - if the light is essentially red for this lane
+                elif trafficLights[self.orientation].color != "TURN":
+                    # otherwise, hasn't crossed initial line, follow south logic:
                     # if first car and hasn't reached stop line
-                    elif self.location["y"] + self.image.get_rect().height < self.stop_dist and self.index == \
-                            vehicles[self.direction]["numCrossed"]:
+                    if self.location["y"] + self.image.get_rect().height < self.stop_dist and self.index == \
+                         vehicles[self.direction]["numCrossed"]:
                         self.location["y"] = min(self.location["y"] + self.speed,
-                                                 self.stop_dist - 3 - self.image.get_rect().height)
+                                             self.stop_dist - 3 - self.image.get_rect().height)
                     # otherwise, not first car and distance behind vehicle is large enough
                     elif self.location["y"] + self.image.get_rect().height < (
                             vehicles[self.direction]["lane"][self.index - 1].location["y"] - vehicularGap) and \
                             self.location["y"] + self.image.get_rect().height <= self.stop_dist:
                         self.location["y"] += self.speed
-                # otherwise if turn move todo turn
-                elif trafficLights[self.orientation].color == "TURN":
-                    if self.crossed == 1:
-                        while self.location['y'] <= stopLines[self.orientation] + 115:
-                            self.location['y'] += 1
-                        # self.location['y'] = stopLines[self.orientation] - 135
-                        path = "visuals/vehicles/" + "east" + "Car.png"
-                        self.image = pygame.image.load(path)
-                        self.location["x"] += self.speed
-                    elif self.location["y"] + self.image.get_rect().height < (
-                            vehicles[self.direction]["lane"][self.index - 1].location["y"] - vehicularGap) and \
-                            self.location["y"] + self.image.get_rect().height <= self.stop_dist:
-                        self.location["y"] += self.speed
-                    else:
-                        self.location["y"] += (self.speed)
-                        
-
+                else:
+                    self.location["y"] += self.speed
 
                 # if it hasn't already crossed, and has now crossed the stop line boundary
-                if self.crossed == 0 and self.location["y"] + self.image.get_rect().height >= stopLines[
-                    self.orientation]:
+                if self.crossed == 0 \
+                        and self.location["y"] + self.image.get_rect().height >= stopLines[self.orientation]:
                     self.crossed = 1
                     vehicles[self.direction]["numCrossed"] += 1
                     # reset the next car's stop ;
@@ -430,7 +433,6 @@ class Vehicle(pygame.sprite.Sprite):
                         self.location["x"] -= self.speed
                     else:
                         self.location["x"] -= (self.speed)
-                    
 
                 # if it hasn't already crossed, and has now crossed the stop line boundary
                 if self.crossed == 0 and self.location["x"] <= stopLines[self.orientation]:
@@ -624,11 +626,11 @@ def create_traffic_lights():
 # populate intersection
 def populate_intersection():
     while True:
-        picker = random.randint(0, 100)
-        if picker <= 63:
-            create_vehicle()
-        else:
-            create_pedestrian()
+        # picker = random.randint(0, 100)
+        # if picker <= 63:
+        create_vehicle()
+        # else:
+        #     create_pedestrian()
         time.sleep(2)
 
 
@@ -636,10 +638,11 @@ def populate_intersection():
 def create_vehicle():
     keys = list(directions.keys())
 
-    o_num = random.randint(0, 3)
-    d_num = random.randint(0, 1)
-
-    Vehicle(keys[o_num], directions[keys[o_num]][d_num])
+    # o_num = random.randint(0, 3)
+    # d_num = random.randint(0, 1)
+    #
+    # Vehicle(keys[o_num], directions[keys[o_num]][d_num])
+    Vehicle("south", "southeast")
 
 
 # instantiate pedestrians randomly
