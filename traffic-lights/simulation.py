@@ -702,38 +702,48 @@ class Simulate:
             trafficLights["east"].set_color("YELLOW")
             trafficLights["west"].set_color("YELLOW")
 
-        # @ 12s, change E/W light to Turn {3s Yellow}
+        # @ 12s, change E/W light to Red {3s yellow}
         if t == 12:
-            trafficLights["east"].set_color("TURN")
-            trafficLights["west"].set_color("TURN")
-
-        # @ 16s, change E/W light to Red {4s Turn}
-        if t == 16:
             trafficLights["east"].set_color("RED")
             trafficLights["west"].set_color("RED")
 
-        # delay & @ 17s, change N/S light to Green {17s red}
-        if t == 17:
+        # @ 15s, change E/W light to Turn {3s Red}
+        if t == 15:
+            trafficLights["east"].set_color("TURN")
+            trafficLights["west"].set_color("TURN")
+
+        # @ 19s, change E/W light to Red {4s Turn}
+        if t == 19:
+            trafficLights["east"].set_color("RED")
+            trafficLights["west"].set_color("RED")
+
+        # delay & @ 21s, change N/S light to Green {21s red}
+        if t == 21:
             trafficLights["north"].set_color("GREEN")
             trafficLights["south"].set_color("GREEN")
 
-        # @ 21s, change N/S light to Yellow {9s Green}
-        if t == 26:
+        # @ 30s, change N/S light to Yellow {9s Green}
+        if t == 30:
             trafficLights["north"].set_color("YELLOW")
             trafficLights["south"].set_color("YELLOW")
 
-        # @ 29s, change N/S light to Turn {3s Yellow}
-        if t == 29:
-            trafficLights["north"].set_color("TURN")
-            trafficLights["south"].set_color("TURN")
-
-        # @ 33, change N/S light to Turn {4s Turn}
+        # @ 33, change N/S light to Red {4s Yellow}
         if t == 33:
             trafficLights["north"].set_color("RED")
             trafficLights["south"].set_color("RED")
 
-        # @ 34s, change E/W light to Green {17s Red}
-        if t == 37:
+        # @ 36s, change N/S light to Turn {3s Red}
+        if t == 36:
+            trafficLights["north"].set_color("TURN")
+            trafficLights["south"].set_color("TURN")
+
+        # @ 40, change N/S light to Turn {4s Turn}
+        if t == 40:
+            trafficLights["north"].set_color("RED")
+            trafficLights["south"].set_color("RED")
+
+        # @ 42s, change E/W light to Green {17s Red}
+        if t == 42:
             trafficLights["east"].set_color("GREEN")
             trafficLights["west"].set_color("GREEN")
             t = -0.1
