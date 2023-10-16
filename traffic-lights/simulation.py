@@ -65,12 +65,6 @@ pedestrianGap = 20
 # size of pedestrian
 pedestrianSize = 23
 
-# create the window, set size
-pygame.init()
-objects = pygame.sprite.Group()
-screenSize = (700, 700)
-screen = pygame.display.set_mode(screenSize)
-
 # crosswalk occupied checks by pedestrians
 northXwalk = 0
 southXwalk = 0
@@ -82,6 +76,13 @@ northDrive = 0
 southDrive = 0
 westDrive = 0
 eastDrive = 0
+
+# create the window, set size
+pygame.init()
+objects = pygame.sprite.Group()
+screenSize = (700, 700)
+screen = pygame.display.set_mode(screenSize)
+
 
 # a single traffic light
 class TrafficLight:
@@ -169,7 +170,15 @@ class Vehicle(pygame.sprite.Sprite):
         objects.add(self)
 
     def move(self):
+        global northDrive
         global southDrive
+        global eastDrive
+        global westDrive
+        global northXwalk
+        global southXwalk
+        global eastXwalk
+        global westXwalk
+
         match self.direction:
             case "north":
                 # if the light is red for this lane
@@ -524,6 +533,58 @@ class Vehicle(pygame.sprite.Sprite):
                     if self.index + 1 < len(vehicles[self.direction]["lane"]):
                         vehicles[self.direction]["lane"][self.index + 1].stop_dist = stopLines[self.orientation]
 
+            case "northRighteast":
+                if self.hasTurned:
+                    self.location["x"] += self.speed
+                # regardless of light, if car is in intersection, turn
+                elif self.crossed == 1:
+                    # move until it reaches the second boundary
+                    # TODO check south left turn logic
+                    if self.location["y"] >= stopLines[self.orientation] - 25:
+                        self.location["y"] -= self.speed
+                    # when boundary is reached, load new car (prevent overlap of new cars
+                    elif self.index == 0 or self.location["x"] <= \
+                            vehicles[self.direction]["lane"][self.index - 1].location["x"] \
+                            - 4 - vehicularGap - self.image.get_rect().height:
+                        self.location["y"] -= self.image.get_rect().width # TODO
+                        path = "visuals/vehicles/eastCar.png"
+                        self.image = pygame.image.load(path)
+                        self.hasTurned = True
+                        eastDrive -= 1
+                        self.location["x"] = min(self.location["x"],
+                                                 vehicles[self.direction]["lane"][self.index - 1].location[
+                                                     "x"] - 4 - vehicularGap)
+                        self.location["x"] += self.speed
+                # if the light is red for this lane
+                elif trafficLights[self.orientation].color == "RED" or trafficLights[self.orientation].color == "TURN":
+                    # if car has already crossed, can keep moving
+                    if self.crossed == 1:
+                        self.location["y"] -= self.speed
+                    # if first car and hasn't reached stop line
+                    elif self.location["y"] > self.stop_dist and self.index == vehicles[self.direction]["numCrossed"]:
+                        self.location["y"] = max(self.location["y"] - self.speed, self.stop_dist + 3)
+                    # otherwise, not first car and distance behind vehicle is large enough
+                    elif self.location["y"] > (
+                            vehicles[self.direction]["lane"][self.index - 1].location["y"] +
+                            vehicles[self.direction]["lane"][
+                                self.index - 1].image.get_rect().height + vehicularGap) and self.location[
+                        "y"] >= self.stop_dist:
+                        self.location["y"] -= self.speed
+                # otherwise if green / yellow, moe
+
+                elif eastXwalk == 0 and self.location["y"] > self.stop_dist:
+                    self.location["y"] -= self.speed
+
+                # if it hasn't already crossed, and has now crossed the stop line boundary
+                if self.crossed == 0 and self.location["x"] + self.image.get_rect().width >= stopLines[
+                    self.orientation]:
+                    southDrive += 1
+                    self.crossed = 1
+                    vehicles[self.direction]["numCrossed"] += 1
+                    # reset the next car's stop ;
+                    if self.index + 1 < len(vehicles[self.direction]["lane"]):
+                        vehicles[self.direction]["lane"][self.index + 1].stop_dist = stopLines[self.orientation]
+
 
 class Pedestrian(pygame.sprite.Sprite):
     def __init__(self, orientation, direction):
@@ -577,6 +638,15 @@ class Pedestrian(pygame.sprite.Sprite):
 
     # move pedestrian
     def move(self):
+        global northDrive
+        global southDrive
+        global eastDrive
+        global westDrive
+        global northXwalk
+        global southXwalk
+        global eastXwalk
+        global westXwalk
+
         match self.orientation:
             case "north":
                 # if traffic light is red / turn (pedestrian light green)
@@ -594,19 +664,20 @@ class Pedestrian(pygame.sprite.Sprite):
                             pedestrianSize + pedestrianGap) and self.location["y"] >= self.stop_dist:
                         self.location["y"] -= self.speed
                 # otherwise if green / yellow, move
-                elif (self.direction == "northLeft" and westDrive == 0) or (self.orientation == "northRight" and eastDrive == 0):
+                elif (self.direction == "northLeft" and westDrive == 0) or (self.direction == "northRight" and eastDrive == 0):
                     self.location["y"] -= self.speed
-                print(eastDrive)
-                if( self.crossed == 1 and (self.location["y"] <= curbLines["south"] + 10)):
-                    self.crossed = 0
-                    if self.orientation == 'northLeft':
+                    
+                if self.crossed == 1 and (self.location["y"] <= curbLines["south"] + 10):
+                    if self.direction == 'northLeft':
                         westXwalk -= 1
                     else:
                         eastXwalk -= 1
+                    self.crossed = 0
+
                 # if it hasn't already crossed, and has now crossed the stop line boundary
                 if self.crossed == 0 and self.location["y"] <= curbLines[self.orientation]:
                     self.crossed = 1
-                    if self.orientation == 'northLeft':
+                    if self.direction == 'northLeft':
                         westXwalk += 1
                     else:
                         eastXwalk += 1
@@ -632,18 +703,18 @@ class Pedestrian(pygame.sprite.Sprite):
                             self.location["y"] + pedestrianSize <= self.stop_dist:
                         self.location["y"] += self.speed
                 # otherwise if green / yellow, move
-                elif (self.orientation == "southLeft" and westDrive == 0) or (self.orientation == "southRight" and eastDrive == 0):
+                elif (self.direction == "southLeft" and westDrive == 0) or (self.direction == "southRight" and eastDrive == 0):
                     self.location["y"] += self.speed
                 if( self.crossed == 1 and (self.location["y"] >= curbLines["north"] - 10)):
                     self.crossed = 0
-                    if self.orientation == 'southLeft':
+                    if self.direction == 'southLeft':
                         westXwalk -= 1
                     else:
                         eastXwalk -= 1
                 # if it hasn't already crossed, and has now crossed the stop line boundary
                 if self.crossed == 0 and self.location["y"] >= curbLines[self.orientation]:
                     self.crossed = 1
-                    if self.orientation == 'southLeft':
+                    if self.direction == 'southLeft':
                         westXwalk += 1
                     else:
                         eastXwalk += 1
@@ -669,18 +740,18 @@ class Pedestrian(pygame.sprite.Sprite):
                             self.location["x"] + pedestrianSize <= self.stop_dist:
                         self.location["x"] += self.speed
                 # otherwise if green / yellow, move
-                elif (self.orientation == "eastTop" and northDrive == 0) or (self.orientation == "eastBottom" and southDrive == 0):
+                elif (self.direction == "eastTop" and northDrive == 0) or (self.direction == "eastBottom" and southDrive == 0):
                     self.location["x"] += self.speed
                 if( self.crossed == 1 and (self.location["x"] >= curbLines["west"] - 10)):
                     self.crossed = 0
-                    if self.orientation == 'eastTop':
+                    if self.direction == 'eastTop':
                         northXwalk -= 1
                     else:
                         southXwalk -= 1
                 # if it hasn't already crossed, and has now crossed the stop line boundary
                 if self.crossed == 0 and self.location["x"] >= curbLines[self.orientation]:
                     self.crossed = 1
-                    if self.orientation == 'eastTop':
+                    if self.direction == 'eastTop':
                         northXwalk += 1
                     else:
                         southXwalk += 1
@@ -704,18 +775,18 @@ class Pedestrian(pygame.sprite.Sprite):
                                                pedestrianSize + vehicularGap) \
                             and self.location["x"] >= self.stop_dist:
                         self.location["x"] -= self.speed
-                elif (self.orientation == "westTop" and northDrive == 0) or (self.orientation == "westBottom" and southDrive == 0):
+                elif (self.direction == "westTop" and northDrive == 0) or (self.direction == "westBottom" and southDrive == 0):
                     self.location["x"] -= self.speed
                 if( self.crossed == 1 and (self.location["y"] <= curbLines["east"] + 10)):
                     self.crossed = 0
-                    if self.orientation == 'westTop': 
+                    if self.direction == 'westTop':
                         northXwalk -= 1
                     else:
                         southXwalk -= 1
                 # if it hasn't already crossed, and has now crossed the stop line boundary
                 if self.crossed == 0 and self.location["x"] <= curbLines[self.orientation]:
                     self.crossed = 1
-                    if self.orientation == 'westTop':
+                    if self.direction == 'westTop':
                         northXwalk += 1
                     else:
                         southXwalk += 1
@@ -753,10 +824,8 @@ def create_vehicle():
     # o_num = random.randint(0, 3)
     # d_num = random.randint(0, 1)
 
-    o_num = 3
-    d_num = 2
-
-    Vehicle(keys[o_num], directions[keys[o_num]][d_num])
+    # Vehicle(keys[o_num], directions[keys[o_num]][d_num])
+    Vehicle("north", "northRighteast")
 
 
 # instantiate pedestrians randomly
