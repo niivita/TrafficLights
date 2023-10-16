@@ -37,7 +37,7 @@ pedestrianCoordinates = {"northLeft": {"x": 270, "y": 700}, "southLeft": {"x": 2
 vehicleCoordinates = {"north": {"x": 383, "y": 700}, "northwest": {"x": 356, "y": 700}, "northRighteast": {"x": 383, "y": 700},
                       "east": {"x": -300, "y": 282}, "northeast": {"x": -300, "y": 252}, "eastRightsouth": {"x": -300, "y": 282}, 
                       "south": {"x": 295, "y": 0}, "southeast": {"x": 325, "y": 0}, "southRightwest": {"x": -300, "y": 282}, 
-                      "west": {"x": 800, "y": 389}, "southwest": {"x": 800, "y": 419}, "westRightnorth": {"x": -300, "y": 282}}
+                      "west": {"x": 800, "y": 389}, "southwest": {"x": 800, "y": 419}, "westRightnorth": {"x": 800, "y": 389}}
 
 # Coordinates of stop lines for cars driving in _ direction
 stopLines = {"north": 460, "east": 240, "south": 240, "west": 460}
@@ -114,6 +114,7 @@ class TrafficLight:
 # a single vehicle
 class Vehicle(pygame.sprite.Sprite):
     def __init__(self, orientation, direction):
+        print(direction)
         pygame.sprite.Sprite.__init__(self)
         # car orientation [NSEW]
         self.orientation = orientation
@@ -138,7 +139,6 @@ class Vehicle(pygame.sprite.Sprite):
         # determine its stopping distance
         # if there are more vehicles in the lane, and has not passed the stop line
         if len(vehicles[direction]["lane"]) > 1 and self.index > vehicles[direction]["numCrossed"]:
-            # TODO: all cars same length? (if so can simplify)
             match orientation:
                 case "north":
                     self.stop_dist = vehicles[direction]["lane"][self.index - 1].stop_dist - \
@@ -582,6 +582,55 @@ class Vehicle(pygame.sprite.Sprite):
                     # reset the next car's stop ;
                     if self.index + 1 < len(vehicles[self.direction]["lane"]):
                         vehicles[self.direction]["lane"][self.index + 1].stop_dist = stopLines[self.orientation]
+            case "westRightnorth":
+                if self.hasTurned:
+                    self.location["y"] -= self.speed
+                # regardless of light, if car is in intersection, turn
+                elif self.crossed == 1:
+                    # move until reaches second boundary
+                    if self.location["x"] >= stopLines[self.orientation] - 25:
+                        self.location["x"] -= self.speed
+                    # when boundary is reached, load new car (prevent overlap of new cars
+                    elif self.index == 0 or self.location["y"] >= \
+                            vehicles[self.direction]["lane"][self.index - 1].location["y"] \
+                            + 4 + vehicularGap + self.image.get_rect().width:
+                        # align with new lane
+                        self.location["x"] -= self.image.get_rect().height * 2
+                        path = "visuals/vehicles/northCar.png"
+                        self.image = pygame.image.load(path)
+                        self.hasTurned = True
+                        northDrive -= 1
+                        self.location["y"] = max(self.location["y"] - self.image.get_rect().width,
+                                                 vehicles[self.direction]["lane"][self.index - 1].location["y"] \
+                                                 + 4 + vehicularGap - self.image.get_rect().width)
+                        self.location["y"] -= self.speed
+                # if the light is red for this lane
+                elif trafficLights[self.orientation].color == "RED" or trafficLights[
+                    self.orientation].color == "TURN":
+                    # if car has already crossed, can keep moving
+                    if self.crossed == 1:
+                        self.location["x"] -= self.speed
+                    # if first car and hasn't reached stop line
+                    elif self.location["x"] > self.stop_dist and self.index == vehicles[self.direction][
+                        "numCrossed"]:
+                        self.location["x"] = max(self.location["x"] - self.speed, self.stop_dist + 3)
+                    # otherwise, not first car and distance behind vehicle is large enough
+                    elif self.location["x"] > (vehicles[self.direction]["lane"][self.index - 1].location["x"] +
+                                               vehicles[self.direction]["lane"][
+                                                   self.index - 1].image.get_rect().width + vehicularGap) \
+                            and self.location["x"] >= self.stop_dist:
+                        self.location["x"] -= self.speed
+
+                elif northXwalk == 0:
+                    self.location["x"] -= self.speed
+
+                # if it hasn't already crossed, and has now crossed the stop line boundary
+                if self.crossed == 0 and self.location["x"] <= stopLines[self.orientation]:
+                    self.crossed = 1
+                    vehicles[self.direction]["numCrossed"] += 1
+                    # reset the next car's stop ;
+                    if self.index + 1 < len(vehicles[self.direction]["lane"]):
+                        vehicles[self.direction]["lane"][self.index + 1].stop_dist = stopLines[self.orientation]
 
 
 class Pedestrian(pygame.sprite.Sprite):
@@ -809,11 +858,11 @@ def create_traffic_lights():
 # populate intersection
 def populate_intersection():
     while True:
-        picker = random.randint(0, 100)
-        if picker <= 63:
-            create_vehicle()
-        else:
-            create_pedestrian()
+        # picker = random.randint(0, 100)
+        # if picker <= 63:
+        create_vehicle()
+        # else:
+        #     create_pedestrian()
         time.sleep(2)
 
 
@@ -825,7 +874,7 @@ def create_vehicle():
     # d_num = random.randint(0, 1)
 
     # Vehicle(keys[o_num], directions[keys[o_num]][d_num])
-    Vehicle("north", "northRighteast")
+    Vehicle("west", "westRightnorth")
 
 
 # instantiate pedestrians randomly
