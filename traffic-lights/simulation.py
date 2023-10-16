@@ -257,6 +257,7 @@ class Vehicle(pygame.sprite.Sprite):
                     # if car has already crossed, can keep moving
                     if self.crossed == 1:
                         self.location["y"] -= self.speed
+                        self.location["x"] -= (self.speed + 5)
                     # if first car and hasn't reached stop line
                     elif self.location["y"] > self.stop_dist and self.index == vehicles[self.direction]["numCrossed"]:
                         self.location["y"] = max(self.location["y"] - self.speed, self.stop_dist + 3)
@@ -269,7 +270,16 @@ class Vehicle(pygame.sprite.Sprite):
                         self.location["y"] -= self.speed
                 # otherwise if TURN, move todo turn
                 else:
-                    self.location["y"] -= self.speed
+                    if self.location["y"] > (
+                            vehicles[self.direction]["lane"][self.index - 1].location["y"] +
+                            vehicles[self.direction]["lane"][
+                                self.index - 1].image.get_rect().height + vehicularGap) and self.location[
+                        "y"] >= self.stop_dist:
+                        self.location["y"] -= self.speed
+                    else:
+                        self.location["y"] -= (self.speed + 6)
+
+                        self.location["x"] -= (self.speed + 10)
 
                 # if it hasn't already crossed, and has now crossed the stop line boundary
                 if self.crossed == 0 and self.location["y"] <= stopLines[self.orientation]:
@@ -297,7 +307,15 @@ class Vehicle(pygame.sprite.Sprite):
                         self.location["y"] += self.speed
                 # otherwise if turn move todo turn
                 else:
-                    self.location["y"] += self.speed
+                    if self.location["y"] + self.image.get_rect().height < (
+                            vehicles[self.direction]["lane"][self.index - 1].location["y"] - vehicularGap) and \
+                            self.location["y"] + self.image.get_rect().height <= self.stop_dist:
+                        self.location["y"] += self.speed
+                    else:
+                        self.location["y"] += (self.speed + 6)
+                        self.location["x"] += self.speed + 10
+                        
+
 
                 # if it hasn't already crossed, and has now crossed the stop line boundary
                 if self.crossed == 0 and self.location["y"] + self.image.get_rect().height >= stopLines[
@@ -326,7 +344,13 @@ class Vehicle(pygame.sprite.Sprite):
                         self.location["x"] += self.speed
                 # otherwise if turn move todo turn
                 else:
-                    self.location["x"] += self.speed
+                    if self.location["x"] + self.image.get_rect().width < (
+                            vehicles[self.direction]["lane"][self.index - 1].location["x"] - vehicularGap) and \
+                            self.location["x"] + self.image.get_rect().width <= self.stop_dist:
+                        self.location["x"] += self.speed
+                    else:
+                        self.location["x"] += self.speed + 6
+                        self.location["y"] -= (self.speed + 10)
 
                 # if it hasn't already crossed, and has now crossed the stop line boundary
                 if self.crossed == 0 and self.location["x"] + self.image.get_rect().width >= stopLines[
@@ -354,7 +378,14 @@ class Vehicle(pygame.sprite.Sprite):
                         self.location["x"] -= self.speed
                 # otherwise if TURN move todo turn
                 else:
-                    self.location["x"] -= self.speed
+                    if self.location["x"] > (vehicles[self.direction]["lane"][self.index - 1].location["x"] +
+                                               vehicles[self.direction]["lane"][
+                                                   self.index - 1].image.get_rect().width + vehicularGap) \
+                            and self.location["x"] >= self.stop_dist:
+                        self.location["x"] -= self.speed
+                    else:
+                        self.location["x"] -= (self.speed + 6)
+                        self.location["y"] += self.speed + 10
 
                 # if it hasn't already crossed, and has now crossed the stop line boundary
                 if self.crossed == 0 and self.location["x"] <= stopLines[self.orientation]:
