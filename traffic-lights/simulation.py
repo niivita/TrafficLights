@@ -649,7 +649,7 @@ class Vehicle(pygame.sprite.Sprite):
                         self.image = pygame.image.load(path)
                         self.hasTurned = True
                         westDrive -= 1
-                        self.location["x"] = min(self.location["x"],
+                        self.location["x"] = max(self.location["x"],
                                                  vehicles[self.direction]["lane"][self.index - 1].location[
                                                      "x"] + 4 + vehicularGap - self.image.get_rect().width)
                         self.location["x"] -= self.speed
