@@ -132,7 +132,7 @@ class Vehicle(pygame.sprite.Sprite):
         self.crossed = 0
         # indicate if the car has turned
         self.hasTurned = False
-        # indicate if the car will be turning
+        # indicate if the car will be turning right
         self.isTurning = 1
 
         # determine its stopping distance
@@ -232,8 +232,7 @@ class Vehicle(pygame.sprite.Sprite):
                     # if the light is red for this lane
                     elif trafficLights[self.orientation].color == "RED" or trafficLights[self.orientation].color == "TURN":
                         # if first car and hasn't reached stop line
-                        if self.location["y"] > self.stop_dist and self.index == vehicles[self.direction][
-                            "numCrossed"]:
+                        if self.location["y"] > self.stop_dist and self.index == vehicles[self.direction]["numCrossed"]:
                             self.location["y"] = max(self.location["y"] - self.speed, self.stop_dist + 3)
                         # otherwise, not first car and distance behind vehicle is large enough
                         elif self.location["y"] > (
@@ -940,7 +939,7 @@ class Simulate:
     thread.daemon = True
     thread.start()
 
-    # track light timing TODO make 4 way red light longer (time for left over turns)
+    # track light timing
     t = 0
 
     # keep lights and vehicles going forever
