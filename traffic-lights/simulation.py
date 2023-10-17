@@ -35,8 +35,8 @@ pedestrianCoordinates = {"northLeft": {"x": 270, "y": 700}, "southLeft": {"x": 2
 
 # Coordinates of vehicles' start driving __ bound in a given lane
 vehicleCoordinates = {"north": {"x": 383, "y": 700}, "northwest": {"x": 356, "y": 700}, "northRighteast": {"x": 383, "y": 700},
-                      "east": {"x": -300, "y": 282}, "northeast": {"x": -300, "y": 252}, "eastRightsouth": {"x": -300, "y": 282}, 
-                      "south": {"x": 295, "y": 0}, "southeast": {"x": 325, "y": 0}, "southRightwest": {"x": -300, "y": 282}, 
+                      "east": {"x": -300, "y": 282}, "northeast": {"x": -300, "y": 252}, "eastRightsouth":  {"x": -300, "y": 282},
+                      "south": {"x": 295, "y": 0}, "southeast": {"x": 325, "y": 0}, "southRightwest": {"x": 295, "y": 0},
                       "west": {"x": 800, "y": 389}, "southwest": {"x": 800, "y": 419}, "westRightnorth": {"x": 800, "y": 389}}
 
 # Coordinates of stop lines for cars driving in _ direction
@@ -870,23 +870,20 @@ def populate_intersection():
 def create_vehicle():
     keys = list(directions.keys())
 
-    # o_num = random.randint(0, 3)
-    # d_num = random.randint(0, 1)
+    o_num = random.randint(0, 3)
+    d_num = random.randint(0, 2)
 
-    # Vehicle(keys[o_num], directions[keys[o_num]][d_num])
-    Vehicle("west", "westRightnorth")
+    Vehicle(keys[o_num], directions[keys[o_num]][d_num])
 
 
 # instantiate pedestrians randomly
 def create_pedestrian():
     keys = list(p_directions.keys())
 
-    # o_num = random.randint(0, 3)
-    # d_num = random.randint(0, 1)
-    #
-    # Pedestrian(keys[o_num], p_directions[keys[o_num]][d_num])
+    o_num = random.randint(0, 3)
+    d_num = random.randint(0, 1)
 
-    Pedestrian("north", "northRight")
+    Pedestrian(keys[o_num], p_directions[keys[o_num]][d_num])
 
 
 class Simulate:
