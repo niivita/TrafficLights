@@ -680,7 +680,7 @@ class Pedestrian(pygame.sprite.Sprite):
         # pedestrian direction [side of street]
         self.direction = direction
         # speed for this pedestrian
-        self.speed = 2
+        self.speed = 5
         # the coordinates for this car based on its direction
         self.location = pedestrianCoordinates[direction].copy()
         # image for this vehicle
