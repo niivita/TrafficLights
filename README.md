@@ -31,6 +31,10 @@ Requires Python 3.11 and pygame
 * When vehicle is turning left, ensure that it does not run into a crossroads with the car that's coming in the opposite direction.
 * Pedestrian light is on to cross when the green/yellow light is on for the direction perpendicular to the pedestrian crossing.
 
+
+# Presentation Slides
+https://docs.google.com/presentation/d/1F_QozkBPEKFAJHfoCKqoEhPsUAWk1snGn3fVCN3dT18/edit?usp=sharing 
+
 # Assignment Instructions:
 
 ## Specifications:
